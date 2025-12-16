@@ -1,4 +1,6 @@
-import type { LotteryRules } from "@/config/lotteries";
+// src/lib/generator.ts
+
+import type { LotteryRules } from "~/config/lotteries";
 
 function cryptoIntInclusive(min: number, max: number) {
   // client-side only (GameGenerator é "use client")
@@ -17,26 +19,29 @@ function cryptoIntInclusive(min: number, max: number) {
   return min + (x % range);
 }
 
-export function generateGame(rules: LotteryRules, picks: number): number[] {
-  const available = rules.max - rules.min + 1;
+export function generateGame(rules: LotteryRules, dozens: number): number[] {
+  const min = rules.range.min;
+  const max = rules.range.max;
 
-  if (picks < rules.minPicks || picks > rules.maxPicks) {
+  const available = max - min + 1;
+
+  if (dozens < rules.dozens.min || dozens > rules.dozens.max) {
     throw new Error(
-      `Quantidade de números deve estar entre ${rules.minPicks} e ${rules.maxPicks}.`
+      `Quantidade de números deve estar entre ${rules.dozens.min} e ${rules.dozens.max}.`
     );
   }
 
-  if (rules.uniqueNumbers && picks > available) {
+  if (rules.uniqueNumbers && dozens > available) {
     throw new Error(
-      `Não dá pra gerar ${picks} números únicos no intervalo ${rules.min}–${rules.max}.`
+      `Não dá pra gerar ${dozens} números únicos no intervalo ${min}–${max}.`
     );
   }
 
   const nums: number[] = [];
   const used = new Set<number>();
 
-  while (nums.length < picks) {
-    const n = cryptoIntInclusive(rules.min, rules.max);
+  while (nums.length < dozens) {
+    const n = cryptoIntInclusive(min, max);
     if (rules.uniqueNumbers) {
       if (used.has(n)) continue;
       used.add(n);
@@ -51,10 +56,10 @@ export function generateGame(rules: LotteryRules, picks: number): number[] {
 export function generateGames(
   rules: LotteryRules,
   gamesCount: number,
-  picks: number
+  dozens: number
 ): number[][] {
   if (!Number.isInteger(gamesCount) || gamesCount <= 0) {
     throw new Error("Quantidade de jogos inválida.");
   }
-  return Array.from({ length: gamesCount }, () => generateGame(rules, picks));
+  return Array.from({ length: gamesCount }, () => generateGame(rules, dozens));
 }

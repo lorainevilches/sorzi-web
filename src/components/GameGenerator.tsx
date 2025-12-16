@@ -1,133 +1,159 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LOTTERIES } from "~/config/lotteries";
+import { Dice5, Sparkles, Play } from "lucide-react";
+
+import { LOTTERIES, type LotteryKey } from "~/config/lotteries";
 import { generateGames } from "~/lib/generator";
 
+/* -------------------------------------------------------
+ Component
+------------------------------------------------------- */
 export default function GameGenerator() {
-  const rules = useMemo(() => LOTTERIES.custom, []);
-  const [gamesCount, setGamesCount] = useState(5);
-  const [picks, setPicks] = useState(6);
-  const [games, setGames] = useState<number[][]>([]);
-  const [error, setError] = useState<string>("");
+  const lotteryList = useMemo(() => Object.values(LOTTERIES), []);
 
+  const [lotteryKey, setLotteryKey] = useState<LotteryKey>("mega_sena");
+  const rules = LOTTERIES[lotteryKey];
+
+  // dezenas sempre começam no mínimo da loteria
+  const [dozens, setDozens] = useState<number>(rules.dozens.min);
+
+  const [gamesCount, setGamesCount] = useState(5);
+  const [games, setGames] = useState<number[][]>([]);
+  const [error, setError] = useState("");
+
+  /* -------------------------------------------------------
+   Regras UX
+  ------------------------------------------------------- */
+  function changeLottery(next: LotteryKey) {
+    setLotteryKey(next);
+    setGames([]);
+    setError("");
+    setDozens(LOTTERIES[next].dozens.min); // 🔒 sempre resetar
+  }
+
+  /* -------------------------------------------------------
+   Ação principal
+  ------------------------------------------------------- */
   function onGenerate() {
     setError("");
     try {
-      const result = generateGames(rules, gamesCount, picks);
-      setGames(result);
+      setGames(generateGames(rules, gamesCount, dozens));
     } catch (e: any) {
+      setGames([]);
       setError(e?.message ?? "Erro ao gerar.");
     }
   }
 
-  function onClear() {
-    setError("");
-    setGames([]);
-  }
-
-  async function copyAll() {
-    if (!games.length) return;
-    const text = games
-      .map((g, i) => `Jogo #${i + 1}: ${g.join(" - ")}`)
-      .join("\n");
-    await navigator.clipboard.writeText(text);
-  }
-
+  /* -------------------------------------------------------
+   Render
+  ------------------------------------------------------- */
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4 sm:p-6">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm text-zinc-300">
-              Quantidade de jogos
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={200}
-              value={gamesCount}
-              onChange={(e) => setGamesCount(Number(e.target.value))}
-              className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-600"
-            />
+    <div className="space-y-8">
+      {/* ================= CONFIGURAÇÃO ================= */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Card: Loteria */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+          <div className="mb-3 flex items-center gap-2 text-zinc-200">
+            <Dice5 size={18} />
+            <h3 className="font-semibold">Loteria</h3>
           </div>
 
-          <div>
-            <label className="block text-sm text-zinc-300">
-              Números por jogo
-            </label>
-            <input
-              type="number"
-              min={rules.minPicks}
-              max={rules.maxPicks}
-              value={picks}
-              onChange={(e) => setPicks(Number(e.target.value))}
-              className="mt-2 w-full rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2 outline-none focus:ring-2 focus:ring-zinc-600"
-            />
-          </div>
+          <select
+            value={lotteryKey}
+            onChange={(e) => changeLottery(e.target.value as LotteryKey)}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
+          >
+            {lotteryList.map((l) => (
+              <option key={l.key} value={l.key}>
+                {l.name}
+              </option>
+            ))}
+          </select>
+
+          <p className="mt-3 text-xs text-zinc-500">
+            Intervalo {rules.range.min}–{rules.range.max} • Dezenas{" "}
+            {rules.dozens.min}–{rules.dozens.max}
+          </p>
         </div>
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <button
-            onClick={onGenerate}
-            className="rounded-xl bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-950 hover:bg-white"
-          >
-            Gerar
-          </button>
-          <button
-            onClick={onClear}
-            className="rounded-xl border border-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-900/60"
-          >
-            Limpar
-          </button>
-          <button
-            onClick={copyAll}
-            className="rounded-xl border border-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-900/60"
-          >
-            Copiar tudo
-          </button>
-        </div>
-
-        {error ? (
-          <div className="mt-4 rounded-xl border border-red-900/50 bg-red-950/30 px-4 py-3 text-sm text-red-200">
-            {error}
+        {/* Card: Dezenas */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+          <div className="mb-3 flex items-center gap-2 text-zinc-200">
+            <Sparkles size={18} />
+            <h3 className="font-semibold">Dezenas</h3>
           </div>
-        ) : null}
+
+          <input
+            type="number"
+            min={rules.dozens.min}
+            max={rules.dozens.max}
+            value={dozens}
+            onChange={(e) => setDozens(Number(e.target.value))}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
+          />
+
+          <p className="mt-2 text-xs text-zinc-500">
+            Quantidade de números por jogo
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-zinc-200">Resultados</h2>
-          <span className="text-xs text-zinc-500">
-            Intervalo {rules.min}–{rules.max} • únicos • ordenados
-          </span>
+      {/* ================= RESUMO ================= */}
+      <div className="rounded-2xl border border-zinc-700 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
+        <h3 className="mb-3 font-semibold text-zinc-100">
+          Resumo da configuração
+        </h3>
+
+        <div className="grid gap-3 md:grid-cols-3 text-sm text-zinc-300">
+          <div>
+            <strong>Loteria:</strong> {rules.name}
+          </div>
+          <div>
+            <strong>Dezenas:</strong> {dozens}
+          </div>
+          <div>
+            <strong>Jogos:</strong> {gamesCount}
+          </div>
         </div>
+
+        <div className="mt-5 flex items-center gap-4">
+          <input
+            type="number"
+            min={1}
+            value={gamesCount}
+            onChange={(e) => setGamesCount(Number(e.target.value))}
+            className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
+          />
+
+          <button
+            onClick={onGenerate}
+            className="ml-auto inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
+          >
+            <Play size={16} /> Gerar jogos
+          </button>
+        </div>
+
+        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+      </div>
+
+      {/* ================= RESULTADOS ================= */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-200">Resultados</h3>
 
         <div className="grid gap-3 sm:grid-cols-2">
           {games.map((nums, idx) => (
             <div
               key={idx}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/30 p-4"
+              className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
             >
-              <div className="mb-3 flex items-center justify-between">
-                <div className="text-sm font-semibold text-zinc-200">
-                  Jogo #{idx + 1}
-                </div>
-                <button
-                  className="rounded-lg border border-zinc-800 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-900/60"
-                  onClick={() =>
-                    navigator.clipboard.writeText(nums.join(" - "))
-                  }
-                >
-                  Copiar
-                </button>
-              </div>
+              <div className="mb-2 text-xs text-zinc-400">Jogo #{idx + 1}</div>
 
               <div className="flex flex-wrap gap-2">
                 {nums.map((n) => (
                   <span
-                    key={n}
-                    className="inline-flex items-center justify-center rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-1 text-sm font-semibold"
+                    key={`${idx}-${n}`}
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-semibold"
                   >
                     {String(n).padStart(2, "0")}
                   </span>
@@ -137,10 +163,20 @@ export default function GameGenerator() {
           ))}
         </div>
 
-        {!games.length ? (
-          <p className="text-sm text-zinc-500">Gere para aparecer aqui.</p>
-        ) : null}
+        {!games.length && (
+          <p className="text-sm text-zinc-500">
+            Gere seus jogos para ver os números aqui.
+          </p>
+        )}
       </div>
+
+      {/* 
+        🔒 FUTURO (comentado propositalmente)
+        - Card Estratégia (Orçamento / Quantidade)
+        - Comparação automática
+        - Premiação informativa
+        - Valores e chances
+      */}
     </div>
   );
 }
