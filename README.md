@@ -1,4 +1,4 @@
-# Sorzi Engine 🎲
+# Sorzi Engine
 
 > Engine robusta de geração e simulação de jogos para loterias da Caixa Econômica Federal.
 
@@ -44,6 +44,7 @@ src/
 │   └── lotteries.ts       # Regras de Negócio: Definição de ranges, mínimos/máximos e metadados de cada loteria.
 └── lib/
     └── generator.ts       # Core Lógico: Algoritmos de geração de números (CSPRNG).
+````
 
 ---
 
@@ -87,6 +88,3 @@ O projeto utiliza uma paleta escura ("Dark Mode" nativo) baseada na escala **Zin
 - **Surface/Panels:** Zinc 900 com bordas sutis (Zinc 800)
 - **Text:** Zinc 100 (Primary), Zinc 400 (Secondary)
 - **Accent:** Verde Neon (Customizável via CSS Variables)
-
----
-````
