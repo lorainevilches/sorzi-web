@@ -1,8 +1,8 @@
-# Sorzi Engine
+![Sorzi Engine Cover](https://raw.githubusercontent.com/lorainevilches/sorzi-web/main/public/images/idv_white.png)
+# Sorzi
 
 > Engine robusta de geração e simulação de jogos para loterias da Caixa Econômica Federal.
 
-![Sorzi Engine Cover](./public/images/idv.png)
 
 ## Sobre o Projeto
 
