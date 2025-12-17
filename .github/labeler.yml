@@ -1,0 +1,8 @@
+enhancement:
+  - head-branch: ["^feat/", "^feature/"]
+
+bug:
+  - head-branch: ["^fix/", "^bug/", "^bugfix/", "^hotfix/"]
+
+documentation:
+  - head-branch: ["^docs/"]
