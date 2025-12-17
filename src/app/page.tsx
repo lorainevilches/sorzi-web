@@ -6,8 +6,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import GameGenerator from "~/components/GameGenerator";
 import { motion, AnimatePresence } from "framer-motion";
-
-// 👇 Importamos as configs para saber os valores padrão
+import { HelpCircle } from "lucide-react";
+import Link from "next/link";
 import { LOTTERIES, type LotteryKey } from "~/config/lotteries";
 
 const Background = dynamic(() => import("~/components/Background"), {
@@ -163,6 +163,19 @@ export default function Page() {
             )}
           </AnimatePresence>
         </div>
+        <Link
+          href="/help"
+          className="fixed bottom-6 right-6 p-3 bg-zinc-900 border border-zinc-800 rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-xl"
+          title="Suporte"
+        >
+          <HelpCircle size={24} />
+        </Link>
+        <footer className="pb-10 text-center">
+          <p className="text-zinc-500 text-sm">
+            © 2025 Sorzi • Desenvolvido por{" "}
+            <a href="https://ohmycodes.com.br">Oh My Codes</a>
+          </p>
+        </footer>
       </main>
     </>
   );
