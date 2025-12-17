@@ -6,41 +6,54 @@ import { Dice5, Sparkles, Play } from "lucide-react";
 import { LOTTERIES, type LotteryKey } from "~/config/lotteries";
 import { generateGames } from "~/lib/generator";
 
+type Props = {
+  // Ações do Pai
+  onResults: (games: number[][]) => void;
+  mode: "idle" | "generated";
+  onClear?: () => void;
+
+  // Estados que agora vêm do Pai (Lifted State)
+  lotteryKey: LotteryKey;
+  onLotteryChange: (key: LotteryKey) => void;
+  dozens: number;
+  onDozensChange: (val: number) => void;
+  gamesCount: number;
+  onGamesCountChange: (val: number) => void;
+};
+
 /* -------------------------------------------------------
- Component
+   Component
 ------------------------------------------------------- */
-export default function GameGenerator() {
+export default function GameGenerator({
+  onResults,
+  mode,
+  onClear,
+  // Props de estado
+  lotteryKey,
+  onLotteryChange,
+  dozens,
+  onDozensChange,
+  gamesCount,
+  onGamesCountChange,
+}: Props) {
   const lotteryList = useMemo(() => Object.values(LOTTERIES), []);
 
-  const [lotteryKey, setLotteryKey] = useState<LotteryKey>("mega_sena");
+  // Derivamos as regras diretamente da prop selecionada
   const rules = LOTTERIES[lotteryKey];
 
-  // dezenas sempre começam no mínimo da loteria
-  const [dozens, setDozens] = useState<number>(rules.dozens.min);
-
-  const [gamesCount, setGamesCount] = useState(5);
-  const [games, setGames] = useState<number[][]>([]);
+  // O único estado local que sobra é o de erro visual
   const [error, setError] = useState("");
-
-  /* -------------------------------------------------------
-   Regras UX
-  ------------------------------------------------------- */
-  function changeLottery(next: LotteryKey) {
-    setLotteryKey(next);
-    setGames([]);
-    setError("");
-    setDozens(LOTTERIES[next].dozens.min); // 🔒 sempre resetar
-  }
 
   /* -------------------------------------------------------
    Ação principal
   ------------------------------------------------------- */
-  function onGenerate() {
+  function handleGenerate() {
     setError("");
     try {
-      setGames(generateGames(rules, gamesCount, dozens));
+      // Usa os valores que vieram das props
+      const result = generateGames(rules, gamesCount, dozens);
+      onResults(result);
     } catch (e: any) {
-      setGames([]);
       setError(e?.message ?? "Erro ao gerar.");
     }
   }
@@ -51,7 +64,7 @@ export default function GameGenerator() {
   return (
     <div className="space-y-8">
       {/* ================= CONFIGURAÇÃO ================= */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="flex flex-col justify-between">
         {/* Card: Loteria */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
           <div className="mb-3 flex items-center gap-2 text-zinc-200">
@@ -61,7 +74,7 @@ export default function GameGenerator() {
 
           <select
             value={lotteryKey}
-            onChange={(e) => changeLottery(e.target.value as LotteryKey)}
+            onChange={(e) => onLotteryChange(e.target.value as LotteryKey)}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
           >
             {lotteryList.map((l) => (
@@ -84,99 +97,80 @@ export default function GameGenerator() {
             <h3 className="font-semibold">Dezenas</h3>
           </div>
 
-          <input
-            type="number"
-            min={rules.dozens.min}
-            max={rules.dozens.max}
+          <select
             value={dozens}
-            onChange={(e) => setDozens(Number(e.target.value))}
+            onChange={(e) => onDozensChange(Number(e.target.value))}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
-          />
+          >
+            {Array.from(
+              { length: rules.dozens.max - rules.dozens.min + 1 },
+              (_, i) => {
+                const value = rules.dozens.min + i;
+                return (
+                  <option key={value} value={value}>
+                    {value} números
+                  </option>
+                );
+              }
+            )}
+          </select>
 
           <p className="mt-2 text-xs text-zinc-500">
             Quantidade de números por jogo
           </p>
         </div>
-      </div>
 
-      {/* ================= RESUMO ================= */}
-      <div className="rounded-2xl border border-zinc-700 bg-gradient-to-br from-zinc-900 to-zinc-950 p-6">
-        <h3 className="mb-3 font-semibold text-zinc-100">
-          Resumo da configuração
-        </h3>
+        {/* ================= RESUMO / JOGOS ================= */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
+          <div className="mb-3 flex items-center gap-2 text-zinc-200">
+            <Sparkles size={18} />
+            <h3 className="font-semibold">Quantidade de jogos</h3>
+          </div>
 
-        <div className="grid gap-3 md:grid-cols-3 text-sm text-zinc-300">
-          <div>
-            <strong>Loteria:</strong> {rules.name}
-          </div>
-          <div>
-            <strong>Dezenas:</strong> {dozens}
-          </div>
-          <div>
-            <strong>Jogos:</strong> {gamesCount}
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center gap-4">
           <input
-            type="number"
-            min={1}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
             value={gamesCount}
-            onChange={(e) => setGamesCount(Number(e.target.value))}
-            className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
+            onChange={(e) => {
+              const v = e.target.value.replace(/\D/g, "");
+              onGamesCountChange(Number(v || 0));
+            }}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2"
           />
-
-          <button
-            onClick={onGenerate}
-            className="ml-auto inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2 text-sm font-semibold text-zinc-900 hover:bg-zinc-100"
+          <div
+            className={`mt-5 flex gap-3 ${
+              mode === "idle" ? "items-center" : "flex-col"
+            }`}
           >
-            <Play size={16} /> Gerar jogos
-          </button>
-        </div>
-
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
-      </div>
-
-      {/* ================= RESULTADOS ================= */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-200">Resultados</h3>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          {games.map((nums, idx) => (
-            <div
-              key={idx}
-              className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+            <button
+              onClick={handleGenerate}
+              className={`inline-flex items-center justify-center gap-2 rounded-xl
+      bg-[var(--sorzi-accent)] px-6 py-3 text-sm font-semibold
+      text-zinc-900 transition
+      hover:brightness-110
+      active:scale-[0.98]
+      ${mode === "generated" ? "w-full" : ""}
+    `}
             >
-              <div className="mb-2 text-xs text-zinc-400">Jogo #{idx + 1}</div>
+              <Play size={16} />
+              {mode === "generated" ? "Gerar novamente" : "Gerar jogos"}
+            </button>
 
-              <div className="flex flex-wrap gap-2">
-                {nums.map((n) => (
-                  <span
-                    key={`${idx}-${n}`}
-                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-1 text-sm font-semibold"
-                  >
-                    {String(n).padStart(2, "0")}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+            {mode === "generated" && onClear && (
+              <button
+                onClick={onClear}
+                className="w-full rounded-xl border border-white/10
+      bg-black/30 px-4 py-2 text-sm text-zinc-300
+      hover:bg-black/40 transition"
+              >
+                Limpar resultados
+              </button>
+            )}
+            {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+          </div>
         </div>
-
-        {!games.length && (
-          <p className="text-sm text-zinc-500">
-            Gere seus jogos para ver os números aqui.
-          </p>
-        )}
       </div>
-
-      {/* 
-        🔒 FUTURO (comentado propositalmente)
-        - Card Estratégia (Orçamento / Quantidade)
-        - Comparação automática
-        - Premiação informativa
-        - Valores e chances
-      */}
     </div>
   );
 }

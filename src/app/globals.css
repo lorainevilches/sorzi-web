@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base */
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #0a0a0a;
+  color: #fafafa;
+}
+
+/* -------- Sorzi Engine UI (Depth) -------- */
+
+/* Card/painel padrão com profundidade */
+.sorzi-panel {
+  background: var(--sorzi-panel);
+  border: 1px solid var(--sorzi-line);
+  border-radius: 18px;
+
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.55);
+
+  backdrop-filter: blur(8px);
+
+  transition: transform 0.25s ease, box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.sorzi-panel:hover {
+  transform: translateY(-2px);
+  border-color: rgba(245, 193, 108, 0.25);
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Painel principal (Engine) — mais foco */
+.sorzi-panel--core {
+  background: var(--sorzi-panel-core);
+  border-color: var(--sorzi-line-strong);
+
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 0 rgba(0, 0, 0, 0.65);
+}
+
+/* Cabeçalho do painel */
+.sorzi-panel__title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.88);
+  letter-spacing: 0.01em;
+}
+
+/* Texto auxiliar */
+.sorzi-muted {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Linha divisória sutil */
+.sorzi-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sorzi-zebra-edge {
+  position: relative;
+  overflow: hidden;
+}
+
+.sorzi-zebra-edge::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(245, 193, 108, 0.18) 12%,
+    transparent 24%,
+    transparent 55%,
+    rgba(245, 193, 108, 0.12) 70%,
+    transparent 85%
+  );
+  opacity: 0.7;
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* -------- Sorzi Accent -------- */
+:root {
+  --sorzi-bg: #0a0a0a;
+  --sorzi-panel: rgba(28, 28, 34, 0.86);
+  --sorzi-panel-core: rgba(36, 36, 44, 0.92);
+
+  /* zebra / “deu zebra” (evento) */
+  --sorzi-accent: #f5c16c;
+  --sorzi-accent-soft: rgba(245, 193, 108, 0.15);
+  --sorzi-accent-2: #a78bfa; /* roxo frio (opcional, só detalhes) */
+
+  --sorzi-line: rgba(255, 255, 255, 0.08);
+  --sorzi-line-strong: rgba(255, 255, 255, 0.12);
+}
+
+.sorzi-accent {
+  color: var(--sorzi-accent);
+}
+
+.sorzi-accent-border {
+  border-color: var(--sorzi-accent-soft);
 }
