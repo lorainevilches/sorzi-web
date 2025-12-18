@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -6,7 +5,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import GameGenerator from "~/components/GameGenerator";
 import { motion, AnimatePresence } from "framer-motion";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, Settings2, Eye } from "lucide-react";
 import Link from "next/link";
 import { LOTTERIES, type LotteryKey } from "~/config/lotteries";
 
@@ -21,46 +20,37 @@ export default function Page() {
   const [results, setResults] = useState<number[][]>([]);
   const [generationId, setGenerationId] = useState(0);
   const [mounted, setMounted] = useState(false);
-
-  /* =======================================================
-     ESTADO COMPARTILHADO (Lifted State)
-     Agora o Pai controla as configurações do jogo.
-  ======================================================= */
   const [lotteryKey, setLotteryKey] = useState<LotteryKey>("mega_sena");
   const [gamesCount, setGamesCount] = useState(5);
-  // Inicia com o mínimo da Mega Sena (6)
   const [dozens, setDozens] = useState<number>(
     LOTTERIES["mega_sena"].dozens.min
   );
 
-  // Lógica inteligente de troca de loteria
+  // Controle de visibilidade para Mobile
+  const [showSettings, setShowSettings] = useState(true);
+
   function handleLotteryChange(key: LotteryKey) {
     setLotteryKey(key);
-    // Reseta as dezenas para o mínimo da nova loteria
     setDozens(LOTTERIES[key].dozens.min);
-    // Limpa a tela para evitar confusão (resultados da loteria anterior)
     setResults([]);
     setEngineState("idle");
+    setShowSettings(true);
   }
 
-  /* =======================================================
-     HANDLERS
-  ======================================================= */
   function handleResults(games: number[][]) {
     setResults(games);
     setEngineState("generated");
     setGenerationId((prev) => prev + 1);
+    // No Mobile, após gerar, foca nos resultados
+    setShowSettings(false);
   }
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
-    return null;
-  }
+  if (!mounted) return null;
 
-  // Objeto auxiliar para passar props limpas para os componentes
   const sharedProps = {
     lotteryKey,
     onLotteryChange: handleLotteryChange,
@@ -78,23 +68,23 @@ export default function Page() {
       <main className="relative min-h-screen text-zinc-100">
         <div className="mx-auto max-w-[1400px] px-6 py-10">
           {/* Header */}
-          <header className="mb-8">
-            <div className="relative h-12 w-40">
-              {" "}
-              <Image
-                src="/images/idv_white.png"
-                alt="Sorzi Logo"
-                fill
-                className="object-contain object-left"
-                priority
-              />
+          <header className="mb-8 flex justify-between items-start">
+            <div>
+              <div className="relative h-12 w-40">
+                <Image
+                  src="/images/idv_white.png"
+                  alt="Sorzi Logo"
+                  fill
+                  className="object-contain object-left"
+                  priority
+                />
+              </div>
+              <p className="mt-1 text-sm text-zinc-400">
+                Geração e simulação de jogos
+              </p>
             </div>
-            <p className="mt-1 text-sm text-zinc-400">
-              Geração e simulação de jogos
-            </p>
           </header>
 
-          {/* ================= ENGINE STATES ================= */}
           <AnimatePresence mode="wait" initial={false}>
             {engineState === "idle" ? (
               <motion.section
@@ -102,54 +92,64 @@ export default function Page() {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.35, ease: "easeOut" }}
                 className="flex justify-center"
               >
-                <motion.div
-                  layout
-                  className="w-full max-w-[560px] sorzi-panel sorzi-panel--core sorzi-zebra-edge p-6"
-                >
-                  {/* 👇 Usando as props compartilhadas */}
+                <div className="w-full max-w-[560px] sorzi-panel sorzi-panel--core sorzi-zebra-edge p-6">
                   <GameGenerator mode="idle" {...sharedProps} />
-                </motion.div>
+                </div>
               </motion.section>
             ) : (
               <motion.section
                 key="engine-generated"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="grid grid-cols-12 gap-6"
+                className="grid grid-cols-1 lg:grid-cols-12 gap-6"
               >
-                {/* Engine (esquerda) */}
+                {/* LADO ESQUERDO: ENGINE / CONFIGURAÇÕES */}
                 <motion.aside
-                  layout
-                  initial={{ x: -24, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.45, ease: "easeOut" }}
-                  className="col-span-3 sorzi-panel sorzi-panel--core p-5"
+                  className={`col-span-1 lg:col-span-3 sorzi-panel sorzi-panel--core p-5 
+                    ${showSettings ? "block" : "hidden lg:block"}`}
                 >
-                  {/* 👇 Usando as props compartilhadas + onClear */}
+                  {/* Cabeçalho do Painel no Mobile */}
+                  <div className="flex lg:hidden justify-between items-center mb-6">
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                      Configurações
+                    </h3>
+                    <button
+                      onClick={() => setShowSettings(false)}
+                      className="flex items-center gap-2 text-xs text-blue-400 font-medium"
+                    >
+                      <Eye size={14} /> Ver Resultados
+                    </button>
+                  </div>
+
                   <GameGenerator
                     mode="generated"
                     {...sharedProps}
                     onClear={() => {
                       setResults([]);
                       setEngineState("idle");
+                      setShowSettings(true);
                     }}
                   />
                 </motion.aside>
 
-                {/* Sistema/Resultados (direita) */}
+                {/* LADO DIREITO: RESULTADOS */}
                 <motion.section
-                  layout
-                  initial={{ x: 24, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.45, ease: "easeOut", delay: 0.05 }}
-                  className="col-span-9 sorzi-panel p-6"
+                  className={`col-span-1 lg:col-span-9 sorzi-panel p-6 
+                    ${!showSettings ? "block" : "hidden lg:block"}`}
                 >
-                  <h2 className="sorzi-panel__title mb-4">Resultados</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="sorzi-panel__title">Resultados</h2>
+
+                    {/* Botão para voltar ao painel no Mobile */}
+                    <button
+                      onClick={() => setShowSettings(true)}
+                      className="lg:hidden flex items-center gap-2 text-xs bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-lg text-zinc-200"
+                    >
+                      <Settings2 size={14} /> Ajustar Jogos
+                    </button>
+                  </div>
 
                   {results.length === 0 ? (
                     <div className="text-sm sorzi-muted">
@@ -163,17 +163,26 @@ export default function Page() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Floating Help */}
         <Link
-          href="/help"
-          className="fixed bottom-6 right-6 p-3 bg-zinc-900 border border-zinc-800 rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-xl"
+          href="/suporte"
+          className="fixed bottom-6 right-6 p-3 bg-zinc-900 border border-zinc-800 rounded-full text-zinc-400 hover:text-white hover:border-zinc-700 transition-all shadow-xl z-50"
           title="Suporte"
         >
           <HelpCircle size={24} />
         </Link>
-        <footer className="pb-10 text-center">
+
+        {/* Footer */}
+        <footer className="pb-10 text-center px-6">
           <p className="text-zinc-500 text-sm">
             © 2025 Sorzi • Desenvolvido por{" "}
-            <a href="https://ohmycodes.com.br">Oh My Codes</a>
+            <a
+              href="https://ohmycodes.com.br"
+              className="hover:text-zinc-300 transition-colors"
+            >
+              Oh My Codes
+            </a>
           </p>
         </footer>
       </main>
@@ -190,7 +199,7 @@ function ResultsGrid({ results }: { results: number[][] }) {
         hidden: {},
         visible: { transition: { staggerChildren: 0.06 } },
       }}
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-h-[70vh] overflow-y-auto pr-2"
+      className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 max-h-[70vh] overflow-y-auto pr-2"
     >
       {results.map((nums, idx) => (
         <motion.div
@@ -199,17 +208,16 @@ function ResultsGrid({ results }: { results: number[][] }) {
             hidden: { opacity: 0, y: 10 },
             visible: { opacity: 1, y: 0 },
           }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="rounded-xl border border-white/10 bg-black/40 p-4"
+          className="rounded-xl border border-white/10 bg-black/40 p-4 shadow-inner"
         >
-          <div className="mb-2 text-xs text-zinc-400">Jogo #{idx + 1}</div>
-
-          {/* bolinhas alinhadas (grid) */}
-          <div className="grid grid-cols-6 gap-3">
+          <div className="mb-3 text-xs text-zinc-500 font-medium tracking-tight">
+            Jogo #{idx + 1}
+          </div>
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             {nums.map((n) => (
               <span
                 key={`${idx}-${n}`}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-sm font-semibold tracking-tight"
+                className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-xs sm:text-sm font-bold text-white shadow-sm"
               >
                 {String(n).padStart(2, "0")}
               </span>
