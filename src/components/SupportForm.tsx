@@ -37,7 +37,7 @@ export default function SupportForm() {
   };
 
   return (
-    <section className="max-w-md mx-auto p-6 bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg">
+    <section className="w-full max-w-md mx-auto p-4 sm:p-6 bg-zinc-900 border border-zinc-800 rounded-xl shadow-lg">
       <h2 className="text-xl font-bold text-white mb-2 text-center">
         Suporte Sorzi
       </h2>
